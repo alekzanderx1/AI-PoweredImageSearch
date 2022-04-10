@@ -20,16 +20,19 @@ function searchFromVoice() {
 
 function search() {
   var searchTerm = document.getElementById("searchbar").value;
-  var apigClient = apigClientFactory.newClient({ apiKey: " " });
-
+  var apigClient = apigClientFactory.newClient({ apiKey: "NKF0afSjQs8n9uIwDify64AjrCziqQAGaJDKNPzI" });
+  
 
     var body = { };
-    var params = {q : searchTerm};
-    var additionalParams = {headers: {
-    'Content-Type':"application/json"
-    }};
+    var params = {
+      q : searchTerm,
+      'x-api-key' : 'NKF0afSjQs8n9uIwDify64AjrCziqQAGaJDKNPzI',
+      'Content-Type':"application/json",};
+    console.log(params);
+    
+    
 
-    apigClient.searchGet(params, body , additionalParams).then(function(res){
+    apigClient.searchGet(params, { } , { }).then(function(res){
         console.log("success");
         console.log(res);
         showImages(res.data)
@@ -57,7 +60,8 @@ function showImages(res) {
     newDiv.appendChild(newContent);
   }
   else {
-    results=res.body.imagePaths
+    results=res['imagePaths']
+    console.log(results);
     for (var i = 0; i < results.length; i++) {
       console.log(results[i]);
       var newDiv = document.getElementById("images");
@@ -67,7 +71,20 @@ function showImages(res) {
       if(classname){newimg.classList.add();}
       
       filename = results[i].substring(results[i].lastIndexOf('/')+1)
-      newimg.src = "https://pipebucketcloud.s3.amazonaws.com/"+filename;
+      var request = new XMLHttpRequest();
+      // 
+      request.open('GET', "https://b2-photos-nyu.s3.amazonaws.com/"+filename, true);
+      request.responseType = 'blob';
+      request.onload = function() {
+          var reader = new FileReader();
+          console.log(request.response);
+          reader.readAsText(request.response, 'base64');
+          reader.onload =  function(e){
+              newimg.src = 'data:image/*;base64, ' + (e.target.result);  
+          };
+      };
+      request.send();
+      
       newDiv.appendChild(newimg);
     }
   }
@@ -84,62 +101,67 @@ function randomChoice(arr) {
 
 
 ///// UPLOAD IMAGES ///////
+function getBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    // reader.onload = () => resolve(reader.result)
+    reader.onload = () => {
+      let encoded = reader.result.replace(/^data:(.*;base64,)?/, '');
+      if (encoded.length % 4 > 0) {
+        encoded += '='.repeat(4 - (encoded.length % 4));
+      }
+      resolve(encoded);
+    };
+    reader.onerror = (error) => reject(error);
+  });
+}
 
 const realFileBtn = document.getElementById("realfile");
 
+var customelabel
 function uploadImage() {
   realFileBtn.click(); 
+  
+  
+ 
+  console.log(customelabel);
 }
 
 function previewFile(input) {
-  var reader = new FileReader();
-  name = input.files[0].name;
-  fileExt = name.split(".").pop();
-  
-  console.log(fileExt)
-  console.log("THIS IS THE EXTENSION!!")
+  var file = document.getElementById('realfile').files[0];
+  customelabel = prompt("Please enter your name", "Harry Potter");
+    console.log(customelabel);
+    var file_data;
+    var encoded_image = getBase64(file).then((data) => {
+        console.log(data);
+        var apigClient = apigClientFactory.newClient({ apiKey: "NKF0afSjQs8n9uIwDify64AjrCziqQAGaJDKNPzI" });
 
-  var onlyname = name.replace(/\.[^/.]+$/, "");
-  var finalName = onlyname+"."+fileExt;
-  name = finalName;
-  
-  reader.onload = function (e) {
-    var src = e.target.result;    
-    var newImage = document.createElement("img");
-    newImage.src = src;
-    encoded = newImage.outerHTML;
-    console.log("shit shit");
-    last_index_quote = encoded.lastIndexOf('"');
-    if (fileExt == 'jpg' || fileExt == 'jpeg' || fileExt == 'png') {
-      encodedStr = encoded.substring(33, last_index_quote);
-    }
-    else {
-      encodedStr = encoded.substring(32, last_index_quote);
-    }
-    // var apigClientFactory = require('aws-api-gateway-client').default;
+        var file_type = file.type + ';base64';
+        //var file_type = file.type;
+        
+        console.log(file.type);
 
-    var apigClient = apigClientFactory.newClient({ apiKey: "NKF0afSjQs8n9uIwDify64AjrCziqQAGaJDKNPzI" });
-
-    var params = {
-        "key": name,
-        "bucket": "b2-photos-nyu",
-        "Content-Type": "image/jpg",
-    };
-
-    var additionalParams = {
-      headers: {
-        "Content-Type": "image/jpg",
-      }
-    };
-    console.log("Here");
-    apigClient.uploadFolderObjectPut(params, encodedStr, additionalParams)
-      .then(function (result) {
-        console.log(result);
-        console.log('success OK');
-        alert("Photo Uploaded Successfully");
-      }).catch(function (result) {
-        console.log(result);
+        var body = data;
+        var params = {
+            key: file.name,
+            bucket: 'b2-photos-nyu',
+            'Content-Type': file.type,
+            'x-amz-meta-customLabels': customelabel,
+            Accept: 'image/*',
+        };
+        var additionalParams = {};
+        apigClient
+        .uploadBucketKeyPut(params, body, additionalParams)
+        .then(function (res) {
+            if (res.status == 200) {
+              //console.log(result);
+              console.log('success OK');
+              alert("Photo Uploaded Successfully");
+            }else{
+              alert("You are dOOmed");
+            }
       });
-    }
-   reader.readAsDataURL(input.files[0]);
+  });
+  
 }
