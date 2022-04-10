@@ -27,7 +27,7 @@ function search() {
     var params = {
       q : searchTerm,
       'x-api-key' : 'NKF0afSjQs8n9uIwDify64AjrCziqQAGaJDKNPzI',
-      'Content-Type':"application/json",};
+      'Content-Type':"application/json"};
     console.log(params);
     
     
