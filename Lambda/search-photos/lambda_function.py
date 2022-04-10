@@ -36,9 +36,9 @@ def getLabelsFromLex(query):
 		localeId='en_US',
 		text=query
 	)
-    print(response)
+    
     slots = get_slots(response)
-    print(slots)
+    
     labels = []
     for slot in slots:
         if slots[slot] is not None:
@@ -46,7 +46,7 @@ def getLabelsFromLex(query):
                 labels.append(slots[slot]['value']['interpretedValue'])
             else:
                 labels.append(slots[slot]['value']['originalValue'])
-    print(labels)
+    
     return labels
 	
 
@@ -72,6 +72,6 @@ def getDataFromES(labels):
             image = hit['_source']['objectKey']
             if image not in imageNames:
                 imageNames.append(image)
-        print(res)
+        
     return { 'imagePaths': imageNames}
 	
