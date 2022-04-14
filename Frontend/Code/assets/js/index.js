@@ -64,35 +64,31 @@ function showImages(res) {
     console.log(results);
     for (var i = 0; i < results.length; i++) {
       console.log(results[i]);
-      var newDiv = document.getElementById("images");
-      //newDiv.style.display = 'inline'
-      var newimg = document.createElement("img");
-      var classname = randomChoice(['big', 'vertical', 'horizontal', '']);
-      if(classname){newimg.classList.add();}
-      
       filename = results[i].substring(results[i].lastIndexOf('/')+1)
       var request = new XMLHttpRequest();
-      // 
       request.open('GET', "https://b2-photos-nyu.s3.amazonaws.com/"+filename, true);
       request.responseType = 'blob';
       request.onload = function() {
-          var reader = new FileReader();
-          console.log(request.response);
-          reader.readAsText(request.response, 'base64');
-          reader.onload =  function(e){
-              newimg.src = 'data:image/*;base64, ' + (e.target.result);  
-          };
-      };
+			console.log('request response')
+		  	console.log(request.response)
+			console.log('this response')
+			console.log(this.response)
+			var newDiv = document.getElementById("images");
+			var newimg = document.createElement("img");
+			var classname = randomChoice(['big', 'vertical', 'horizontal', '']);
+			if(classname){newimg.classList.add();}
+			var reader = new FileReader();
+			reader.onload =  function(e){
+					  newimg.src = 'data:image/*;base64, ' + (e.target.result);  
+			};
+			reader.readAsText(this.response, 'base64');
+			newDiv.appendChild(newimg);
+	  }
       request.send();
-      
-      newDiv.appendChild(newimg);
     }
   }
-
-
-
-
 }
+
 
 function randomChoice(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
